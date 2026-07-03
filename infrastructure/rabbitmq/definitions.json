@@ -3,15 +3,6 @@
   "vhosts": [
     { "name": "/" }
   ],
-  "permissions": [
-    {
-      "user": "calio_admin",
-      "vhost": "/",
-      "configure": ".*",
-      "write": ".*",
-      "read": ".*"
-    }
-  ],
   "exchanges": [
     {
       "name": "calio.events",
