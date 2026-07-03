@@ -1,0 +1,27 @@
+{
+  "rabbit_version": "3.12",
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "users": [
+    { "name": "guest", "password_hash": "guest", "hashing_algorithm": "rabbit_password_hashing_sha256", "tags": "administrator" }
+  ],
+  "permissions": [
+    { "user": "guest", "vhost": "/", "configure": ".*", "write": ".*", "read": ".*" }
+  ],
+  "exchanges": [
+    { "name": "calio.events", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false }
+  ],
+  "queues": [
+    { "name": "analytics.comida", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    { "name": "analytics.rutina", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    { "name": "notifications.agua", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    { "name": "notifications.rutina", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} }
+  ],
+  "bindings": [
+    { "source": "calio.events", "vhost": "/", "destination": "analytics.comida", "destination_type": "queue", "routing_key": "comida.registrada", "arguments": {} },
+    { "source": "calio.events", "vhost": "/", "destination": "analytics.rutina", "destination_type": "queue", "routing_key": "rutina.completada", "arguments": {} },
+    { "source": "calio.events", "vhost": "/", "destination": "notifications.agua", "destination_type": "queue", "routing_key": "agua.actualizada", "arguments": {} },
+    { "source": "calio.events", "vhost": "/", "destination": "notifications.rutina", "destination_type": "queue", "routing_key": "rutina.completada", "arguments": {} }
+  ]
+}

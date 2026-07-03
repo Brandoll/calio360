@@ -1,0 +1,2 @@
+-- No seed data needed for identity service
+-- Users are created via registration endpoint

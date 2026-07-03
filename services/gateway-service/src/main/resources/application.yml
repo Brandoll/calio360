@@ -1,0 +1,93 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: calio-gateway-service
+
+  cloud:
+    gateway:
+      routes:
+        # ===== S-01 Identity Service =====
+        - id: identity-service
+          uri: ${IDENTITY_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=2
+
+        # ===== S-02 AI Food Recognition =====
+        - id: ai-food-service
+          uri: ${AI_FOOD_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/ai-food/**
+          filters:
+            - StripPrefix=2
+
+        # ===== S-03 Food Catalog =====
+        - id: food-catalog-service
+          uri: ${FOOD_CATALOG_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/foods/**
+          filters:
+            - StripPrefix=2
+
+        # ===== S-04 Recipe & Meal Plan =====
+        - id: recipe-service
+          uri: ${RECIPE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/recipes/**
+          filters:
+            - StripPrefix=2
+
+        # ===== S-05 Tracking =====
+        - id: tracking-service
+          uri: ${TRACKING_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/tracking/**
+          filters:
+            - StripPrefix=2
+
+        # ===== S-06 Analytics =====
+        - id: analytics-service
+          uri: ${ANALYTICS_URL:http://localhost:8086}
+          predicates:
+            - Path=/api/analytics/**
+          filters:
+            - StripPrefix=2
+
+        # ===== S-07 Notifications =====
+        - id: notification-service
+          uri: ${NOTIFICATION_URL:http://localhost:8087}
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=2
+
+        # ===== S-10 Wearables =====
+        - id: wearable-service
+          uri: ${WEARABLE_URL:http://localhost:8088}
+          predicates:
+            - Path=/api/wearables/**
+          filters:
+            - StripPrefix=2
+
+        # ===== Exercise Service (Extra) =====
+        - id: exercise-service
+          uri: ${EXERCISE_URL:http://localhost:8090}
+          predicates:
+            - Path=/api/exercises/**
+          filters:
+            - StripPrefix=2
+
+      # CORS global para React Native
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+
+calio:
+  jwt:
+    secret: ${JWT_SECRET:calio-secret-key-2026-prod-very-secure-minimum-256-bits-long}

@@ -1,0 +1,18 @@
+{
+  "name": "notification-service",
+  "version": "1.0.0",
+  "description": "Servicio de Notificaciones Calio (S-07)",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.11.1",
+    "amqplib": "^0.10.3",
+    "dotenv": "^16.4.5",
+    "hono": "^4.3.2",
+    "mongoose": "^8.3.4"
+  }
+}

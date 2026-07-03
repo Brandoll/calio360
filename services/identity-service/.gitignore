@@ -1,0 +1,9 @@
+target/
+*.class
+*.jar
+.idea/
+*.iml
+.vscode/
+.env
+docker-compose.prod.yml
+.DS_Store

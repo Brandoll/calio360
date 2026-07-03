@@ -1,0 +1,22 @@
+# Java
+target/
+*.jar
+*.war
+*.ear
+*.class
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env/ 
+
+# Node
+node_modules/
+npm-debug.log
+
+# Environment
+.env
