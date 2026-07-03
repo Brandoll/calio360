@@ -14,11 +14,20 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Conexión MongoDB
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+# ==========================================
+# CONFIGURACIÓN (Variables CALIO_*)
+# ==========================================
+MONGO_URI = os.getenv("CALIO_ANALYTICS_MONGO_URI", "mongodb://calio-mongodb:27017/calio_analytics_db")
 cliente_mongo = MongoClient(MONGO_URI)
-base_datos = cliente_mongo['calio_analytics']
+base_datos = cliente_mongo['calio_analytics_db']
 coleccion_analiticas = base_datos['user_stats']
+
+# ==========================================
+# HEALTH CHECK
+# ==========================================
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok", "service": "calio-analytics-service"}), 200
 
 # ==========================================
 # RUTAS REST (GRÁFICAS)
@@ -52,7 +61,7 @@ def obtener_estadisticas_semanales(id_usuario):
         return jsonify(estadisticas_usuario), 200
 
     except Exception as e:
-        return jsonify({"error": f"Error en S-06 (GET Stats): {str(e)}"}), 500
+        return jsonify({"error": f"Error en calio-analytics-service (GET Stats): {str(e)}"}), 500
 
 
 @app.route('/analytics/chart/weight/<int:id_usuario>', methods=['GET'])
@@ -76,7 +85,7 @@ def datos_grafica_calorias(id_usuario):
 
 
 # ==========================================
-# REPORTES PDF (NUEVO REQUERIMIENTO)
+# REPORTES PDF
 # ==========================================
 @app.route('/report/pdf/<int:id_usuario>', methods=['GET'])
 def generar_reporte_pdf(id_usuario):
@@ -112,12 +121,13 @@ def generar_reporte_pdf(id_usuario):
 # RABBITMQ CONSUMER ASINCRONO
 # ==========================================
 def rabbitmq_consumer():
-    host = os.getenv("RABBITMQ_HOST", "localhost")
-    user = os.getenv("RABBITMQ_USER", "guest")
-    password = os.getenv("RABBITMQ_PASSWORD", "guest")
+    host = os.getenv("CALIO_RABBITMQ_HOST", "calio-rabbitmq")
+    port = int(os.getenv("CALIO_RABBITMQ_PORT", "5672"))
+    user = os.getenv("CALIO_RABBITMQ_USER", "calio_admin")
+    password = os.getenv("CALIO_RABBITMQ_PASSWORD", "calio_admin")
 
     credentials = pika.PlainCredentials(user, password)
-    parameters = pika.ConnectionParameters(host, 5672, '/', credentials)
+    parameters = pika.ConnectionParameters(host, port, '/', credentials)
     
     try:
         connection = pika.BlockingConnection(parameters)
@@ -126,13 +136,13 @@ def rabbitmq_consumer():
         # El exchange 'calio.events' es usado por toda la plataforma
         channel.exchange_declare(exchange='calio.events', exchange_type='topic', durable=True)
 
-        # Cola temporal para analíticas
-        result = channel.queue_declare(queue='', exclusive=True)
-        queue_name = result.method.queue
+        # Cola persistente (durable) para analíticas
+        channel.queue_declare(queue='calio.analytics.food', durable=True)
+        channel.queue_declare(queue='calio.analytics.exercise', durable=True)
 
-        # Escuchar 2 eventos:
-        channel.queue_bind(exchange='calio.events', queue=queue_name, routing_key='comida.registrada')
-        channel.queue_bind(exchange='calio.events', queue=queue_name, routing_key='rutina.completada')
+        # Bindings
+        channel.queue_bind(exchange='calio.events', queue='calio.analytics.food', routing_key='food.registered')
+        channel.queue_bind(exchange='calio.events', queue='calio.analytics.exercise', routing_key='activity.updated')
 
         def callback(ch, method, properties, body):
             print(f" [Analytics] Recibido evento {method.routing_key}")
@@ -152,17 +162,15 @@ def rabbitmq_consumer():
                     upsert=True
                 )
 
-                if method.routing_key == 'comida.registrada':
+                if method.routing_key == 'food.registered':
                     calorias = data.get("caloriasConsumidas", 0)
-                    # Sumar calorias consumidas a MongoDB
                     coleccion_analiticas.update_one(
                         {"user_id": user_id, "historial_calorias.date": fecha},
                         {"$inc": {"historial_calorias.$.calories_consumed": calorias, "weekly_macros.calories": calorias}}
                     )
 
-                elif method.routing_key == 'rutina.completada':
+                elif method.routing_key == 'activity.updated':
                     calorias = data.get("caloriasQuemadas", 0)
-                    # Sumar calorias quemadas a MongoDB
                     coleccion_analiticas.update_one(
                         {"user_id": user_id, "historial_calorias.date": fecha},
                         {"$inc": {"historial_calorias.$.calories_burned": calorias}}
@@ -171,17 +179,19 @@ def rabbitmq_consumer():
             except Exception as e:
                 print(f"Error procesando mensaje RabbitMQ: {e}")
 
-        print(' [*] Analytics Service esperando eventos de RabbitMQ. Para salir presione CTRL+C')
-        channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+        print(' [*] Analytics Service esperando eventos de RabbitMQ...')
+        channel.basic_consume(queue='calio.analytics.food', on_message_callback=callback, auto_ack=True)
+        channel.basic_consume(queue='calio.analytics.exercise', on_message_callback=callback, auto_ack=True)
         channel.start_consuming()
 
     except Exception as e:
-        print(f"No se pudo conectar a RabbitMQ en modo Asíncrono: {e}")
+        print(f"No se pudo conectar a RabbitMQ: {e}")
 
+# ==========================================
+# ENTRYPOINT (solo para desarrollo local)
+# ==========================================
 if __name__ == '__main__':
-    # Arrancar consumidor de RabbitMQ en un hilo de fondo
     consumer_thread = threading.Thread(target=rabbitmq_consumer, daemon=True)
     consumer_thread.start()
 
-    # Arrancar Flask
-    app.run(port=8086, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=8086, debug=False, use_reloader=False)

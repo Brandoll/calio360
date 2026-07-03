@@ -1,36 +1,45 @@
 server:
-  port: 8090
+  port: 8089
 
 spring:
   application:
-    name: exercise-service
-  
+    name: calio-exercise-service
+
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/calio
-    username: ${DB_USER:calio_user}
-    password: ${DB_PASSWORD:calio_pass}
+    url: jdbc:postgresql://${CALIO_EXERCISE_DB_HOST:calio-postgres}:${CALIO_EXERCISE_DB_PORT:5432}/${CALIO_EXERCISE_DB_NAME:calio_exercise_db}
+    username: ${CALIO_EXERCISE_DB_USER:postgres}
+    password: ${CALIO_EXERCISE_DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    host: ${CALIO_RABBITMQ_HOST:calio-rabbitmq}
+    port: ${CALIO_RABBITMQ_PORT:5672}
+    username: ${CALIO_RABBITMQ_USER:calio_admin}
+    password: ${CALIO_RABBITMQ_PASSWORD:calio_admin}
 
   web:
     resources:
       static-locations: classpath:/static/
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
 logging:
   level:
     root: INFO
-    com.calio.exercise: DEBUG
+    com.calio.exercise: INFO

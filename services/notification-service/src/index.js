@@ -9,7 +9,14 @@ dotenv.config();
 
 const app = new Hono();
 
-// Endpoint manual de pruebas /notify
+// ==========================================
+// HEALTH CHECK
+// ==========================================
+app.get('/health', (c) => c.json({ status: 'ok', service: 'calio-notification-service' }));
+
+// ==========================================
+// ENDPOINT: Envío manual de notificación
+// ==========================================
 app.post('/notify', async (c) => {
   try {
     const body = await c.req.json();
@@ -36,16 +43,16 @@ app.post('/notify', async (c) => {
   }
 });
 
-app.get('/health', (c) => c.json({ status: 'Notification Service is running' }));
-
-// Iniciar base de datos y servidor
-const PORT = process.env.PORT || 8087;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/calio_notifications';
+// ==========================================
+// BOOTSTRAP
+// ==========================================
+const PORT = process.env.CALIO_NOTIFICATION_PORT || 8087;
+const MONGO_URI = process.env.CALIO_NOTIFICATION_MONGO_URI || 'mongodb://calio-mongodb:27017/calio_notification_db';
 
 async function bootstrap() {
   try {
     await mongoose.connect(MONGO_URI);
-    console.log(' Conectado a MongoDB (Notifications)');
+    console.log('[calio-notification-service] Conectado a MongoDB');
 
     // Iniciar consumidor de RabbitMQ en background
     startRabbitMQConsumer();
@@ -54,11 +61,11 @@ async function bootstrap() {
       fetch: app.fetch,
       port: PORT,
     }, (info) => {
-      console.log(` Notification Service (Hono) levantado en http://localhost:${info.port}`);
+      console.log(`[calio-notification-service] Levantado en puerto ${info.port}`);
     });
 
   } catch (error) {
-    console.error('Error arrancando el servicio:', error);
+    console.error('[calio-notification-service] Error arrancando:', error);
     process.exit(1);
   }
 }

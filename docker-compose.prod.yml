@@ -1,8 +1,10 @@
 # ==========================================
-# CALIO360 — Docker Compose (Desarrollo)
+# CALIO360 — Docker Compose (Producción)
 # ==========================================
-# Uso: docker compose up -d
-# Todos los puertos expuestos para debugging local.
+# Uso: docker compose -f docker-compose.prod.yml up -d
+#
+# IMPORTANTE: Crear .env con valores reales antes de ejecutar.
+# Copiar .env.example como .env y rellenar todos los valores.
 # ==========================================
 
 services:
@@ -12,47 +14,53 @@ services:
   calio-postgres:
     image: postgres:15-alpine
     container_name: calio-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${CALIO_POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${CALIO_POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${CALIO_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${CALIO_POSTGRES_PASSWORD}
       POSTGRES_DB: calio_identity_db
-    ports:
-      - "5432:5432"
     volumes:
       - calio_postgres_data:/var/lib/postgresql/data
       - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${CALIO_POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   calio-mongodb:
     image: mongo:6
     container_name: calio-mongodb
-    ports:
-      - "27017:27017"
+    restart: unless-stopped
     volumes:
       - calio_mongodb_data:/data/db
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh --quiet
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   calio-rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: calio-rabbitmq
+    restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: ${CALIO_RABBITMQ_USER:-calio_admin}
-      RABBITMQ_DEFAULT_PASS: ${CALIO_RABBITMQ_PASSWORD:-calio_admin}
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+      RABBITMQ_DEFAULT_USER: ${CALIO_RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${CALIO_RABBITMQ_PASSWORD}
     volumes:
       - calio_rabbitmq_data:/var/lib/rabbitmq
       - ./infrastructure/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
@@ -61,7 +69,12 @@ services:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - calio-network
 
@@ -71,205 +84,249 @@ services:
   calio-identity-service:
     build: ./services/identity-service
     container_name: calio-identity-service
-    ports:
-      - "8081:8081"
+    restart: unless-stopped
     environment:
       CALIO_IDENTITY_DB_HOST: calio-postgres
       CALIO_IDENTITY_DB_PORT: 5432
       CALIO_IDENTITY_DB_NAME: calio_identity_db
-      CALIO_IDENTITY_DB_USER: ${CALIO_POSTGRES_USER:-postgres}
-      CALIO_IDENTITY_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD:-postgres}
+      CALIO_IDENTITY_DB_USER: ${CALIO_POSTGRES_USER}
+      CALIO_IDENTITY_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD}
       CALIO_RABBITMQ_HOST: calio-rabbitmq
       CALIO_RABBITMQ_PORT: 5672
-      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER:-calio_admin}
-      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD:-calio_admin}
-      CALIO_JWT_SECRET: ${CALIO_JWT_SECRET:-calio-secret-key-2026-prod-very-secure-minimum-256-bits-long}
-      CALIO_JWT_EXPIRATION: ${CALIO_JWT_EXPIRATION:-86400000}
-      CALIO_REFRESH_EXPIRATION: ${CALIO_REFRESH_EXPIRATION:-604800000}
+      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER}
+      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD}
+      CALIO_JWT_SECRET: ${CALIO_JWT_SECRET}
+      CALIO_JWT_EXPIRATION: ${CALIO_JWT_EXPIRATION}
+      CALIO_REFRESH_EXPIRATION: ${CALIO_REFRESH_EXPIRATION}
+    volumes:
+      - calio_identity_logs:/app/logs
     depends_on:
       calio-postgres:
         condition: service_healthy
       calio-rabbitmq:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   calio-food-service:
     build: ./services/food-catalog-service
     container_name: calio-food-service
-    ports:
-      - "8083:8083"
+    restart: unless-stopped
     environment:
       CALIO_FOOD_DB_HOST: calio-postgres
       CALIO_FOOD_DB_PORT: 5432
       CALIO_FOOD_DB_NAME: calio_food_db
-      CALIO_FOOD_DB_USER: ${CALIO_POSTGRES_USER:-postgres}
-      CALIO_FOOD_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD:-postgres}
+      CALIO_FOOD_DB_USER: ${CALIO_POSTGRES_USER}
+      CALIO_FOOD_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD}
       CALIO_RABBITMQ_HOST: calio-rabbitmq
       CALIO_RABBITMQ_PORT: 5672
-      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER:-calio_admin}
-      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD:-calio_admin}
-      CALIO_JWT_SECRET: ${CALIO_JWT_SECRET:-calio-secret-key-2026-prod-very-secure-minimum-256-bits-long}
+      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER}
+      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD}
+      CALIO_JWT_SECRET: ${CALIO_JWT_SECRET}
+    volumes:
+      - calio_food_logs:/app/logs
     depends_on:
       calio-postgres:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   calio-recipe-service:
     build: ./services/recipe-service
     container_name: calio-recipe-service
-    ports:
-      - "8084:8084"
+    restart: unless-stopped
     environment:
       CALIO_RECIPE_DB_HOST: calio-postgres
       CALIO_RECIPE_DB_PORT: 5432
       CALIO_RECIPE_DB_NAME: calio_recipe_db
-      CALIO_RECIPE_DB_USER: ${CALIO_POSTGRES_USER:-postgres}
-      CALIO_RECIPE_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD:-postgres}
+      CALIO_RECIPE_DB_USER: ${CALIO_POSTGRES_USER}
+      CALIO_RECIPE_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD}
       CALIO_GEMINI_API_KEY: ${CALIO_GEMINI_API_KEY}
-      CALIO_GEMINI_MODEL: ${CALIO_GEMINI_MODEL:-gemini-2.5-flash}
+      CALIO_GEMINI_MODEL: ${CALIO_GEMINI_MODEL}
       CALIO_FOOD_SERVICE_URL: http://calio-food-service:8083
+    volumes:
+      - calio_recipe_logs:/app/logs
     depends_on:
       calio-postgres:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   calio-tracking-service:
     build: ./services/tracking-service
     container_name: calio-tracking-service
-    ports:
-      - "8085:8085"
+    restart: unless-stopped
     environment:
       CALIO_TRACKING_DB_HOST: calio-postgres
       CALIO_TRACKING_DB_PORT: 5432
       CALIO_TRACKING_DB_NAME: calio_tracking_db
-      CALIO_TRACKING_DB_USER: ${CALIO_POSTGRES_USER:-postgres}
-      CALIO_TRACKING_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD:-postgres}
+      CALIO_TRACKING_DB_USER: ${CALIO_POSTGRES_USER}
+      CALIO_TRACKING_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD}
       CALIO_RABBITMQ_HOST: calio-rabbitmq
       CALIO_RABBITMQ_PORT: 5672
-      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER:-calio_admin}
-      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD:-calio_admin}
+      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER}
+      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD}
+    volumes:
+      - calio_tracking_logs:/app/logs
     depends_on:
       calio-postgres:
         condition: service_healthy
       calio-rabbitmq:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   calio-wearable-service:
     build: ./services/wearable-service
     container_name: calio-wearable-service
-    ports:
-      - "8088:8088"
+    restart: unless-stopped
     environment:
       CALIO_WEARABLE_DB_HOST: calio-postgres
       CALIO_WEARABLE_DB_PORT: 5432
       CALIO_WEARABLE_DB_NAME: calio_wearable_db
-      CALIO_WEARABLE_DB_USER: ${CALIO_POSTGRES_USER:-postgres}
-      CALIO_WEARABLE_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD:-postgres}
+      CALIO_WEARABLE_DB_USER: ${CALIO_POSTGRES_USER}
+      CALIO_WEARABLE_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD}
       CALIO_RABBITMQ_HOST: calio-rabbitmq
       CALIO_RABBITMQ_PORT: 5672
-      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER:-calio_admin}
-      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD:-calio_admin}
+      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER}
+      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD}
+    volumes:
+      - calio_wearable_logs:/app/logs
     depends_on:
       calio-postgres:
         condition: service_healthy
       calio-rabbitmq:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   calio-exercise-service:
     build: ./services/exercise-service
     container_name: calio-exercise-service
-    ports:
-      - "8089:8089"
+    restart: unless-stopped
     environment:
       CALIO_EXERCISE_DB_HOST: calio-postgres
       CALIO_EXERCISE_DB_PORT: 5432
       CALIO_EXERCISE_DB_NAME: calio_exercise_db
-      CALIO_EXERCISE_DB_USER: ${CALIO_POSTGRES_USER:-postgres}
-      CALIO_EXERCISE_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD:-postgres}
+      CALIO_EXERCISE_DB_USER: ${CALIO_POSTGRES_USER}
+      CALIO_EXERCISE_DB_PASSWORD: ${CALIO_POSTGRES_PASSWORD}
       CALIO_RABBITMQ_HOST: calio-rabbitmq
       CALIO_RABBITMQ_PORT: 5672
-      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER:-calio_admin}
-      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD:-calio_admin}
+      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER}
+      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD}
+    volumes:
+      - calio_exercise_logs:/app/logs
     depends_on:
       calio-postgres:
         condition: service_healthy
       calio-rabbitmq:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   # ==========================================
-  # SERVICIOS PYTHON (Flask + Gunicorn)
+  # SERVICIOS PYTHON
   # ==========================================
   calio-ai-service:
     build: ./services/ai-food-service
     container_name: calio-ai-service
-    ports:
-      - "8082:8082"
+    restart: unless-stopped
     environment:
       CALIO_GEMINI_API_KEY: ${CALIO_GEMINI_API_KEY}
-      CALIO_GEMINI_MODEL: ${CALIO_GEMINI_MODEL:-gemini-2.5-flash}
+      CALIO_GEMINI_MODEL: ${CALIO_GEMINI_MODEL}
+    volumes:
+      - calio_ai_logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
   calio-analytics-service:
     build: ./services/analytics-service
     container_name: calio-analytics-service
-    ports:
-      - "8086:8086"
+    restart: unless-stopped
     environment:
       CALIO_ANALYTICS_MONGO_URI: mongodb://calio-mongodb:27017/calio_analytics_db
       CALIO_RABBITMQ_HOST: calio-rabbitmq
       CALIO_RABBITMQ_PORT: 5672
-      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER:-calio_admin}
-      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD:-calio_admin}
+      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER}
+      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD}
+    volumes:
+      - calio_analytics_logs:/app/logs
     depends_on:
       calio-mongodb:
         condition: service_healthy
       calio-rabbitmq:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - calio-network
 
   # ==========================================
-  # SERVICIO NODE.JS (Hono)
+  # SERVICIO NODE.JS
   # ==========================================
   calio-notification-service:
     build: ./services/notification-service
     container_name: calio-notification-service
-    ports:
-      - "8087:8087"
+    restart: unless-stopped
     environment:
       CALIO_NOTIFICATION_MONGO_URI: mongodb://calio-mongodb:27017/calio_notification_db
       CALIO_RABBITMQ_HOST: calio-rabbitmq
       CALIO_RABBITMQ_PORT: 5672
-      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER:-calio_admin}
-      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD:-calio_admin}
+      CALIO_RABBITMQ_USER: ${CALIO_RABBITMQ_USER}
+      CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD}
+    volumes:
+      - calio_notification_logs:/app/logs
     depends_on:
       calio-mongodb:
         condition: service_healthy
       calio-rabbitmq:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     networks:
       - calio-network
 
   # ==========================================
-  # GATEWAY + PROXY
+  # GATEWAY
   # ==========================================
   calio-gateway:
     build: ./services/gateway-service
     container_name: calio-gateway
-    ports:
-      - "8080:8080"
+    restart: unless-stopped
     environment:
-      CALIO_JWT_SECRET: ${CALIO_JWT_SECRET:-calio-secret-key-2026-prod-very-secure-minimum-256-bits-long}
+      CALIO_JWT_SECRET: ${CALIO_JWT_SECRET}
       CALIO_IDENTITY_SERVICE_URL: http://calio-identity-service:8081
       CALIO_AI_SERVICE_URL: http://calio-ai-service:8082
       CALIO_FOOD_SERVICE_URL: http://calio-food-service:8083
@@ -289,18 +346,47 @@ services:
       - calio-notification-service
       - calio-wearable-service
       - calio-exercise-service
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - calio-network
 
+  # ==========================================
+  # NGINX REVERSE PROXY (Único punto expuesto)
+  # ==========================================
   nginx:
     image: nginx:alpine
     container_name: calio-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./infrastructure/nginx/nginx-init.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/proxy_params:/etc/nginx/proxy_params:ro
+      - ./infrastructure/certbot/conf:/etc/letsencrypt:ro
+      - ./infrastructure/certbot/www:/var/www/certbot:ro
     depends_on:
       - calio-gateway
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - calio-network
+
+  # ==========================================
+  # CERTBOT (SSL Certificate Management)
+  # ==========================================
+  certbot:
+    image: certbot/certbot
+    container_name: calio-certbot
+    volumes:
+      - ./infrastructure/certbot/conf:/etc/letsencrypt
+      - ./infrastructure/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     networks:
       - calio-network
 
@@ -311,6 +397,15 @@ volumes:
   calio_postgres_data:
   calio_mongodb_data:
   calio_rabbitmq_data:
+  calio_identity_logs:
+  calio_food_logs:
+  calio_tracking_logs:
+  calio_recipe_logs:
+  calio_ai_logs:
+  calio_analytics_logs:
+  calio_notification_logs:
+  calio_wearable_logs:
+  calio_exercise_logs:
 
 # ==========================================
 # NETWORK

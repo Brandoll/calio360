@@ -1,3 +1,7 @@
+# ==========================================
+# CALIO360 — .gitignore
+# ==========================================
+
 # Java
 target/
 *.jar
@@ -6,17 +10,43 @@ target/
 *.class
 .idea/
 *.iml
+.mvn/
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 venv/
-.env/ 
+.env/
+*.egg-info/
 
 # Node
 node_modules/
 npm-debug.log
+yarn-error.log
 
 # Environment
 .env
+.env.local
+.env.production
+
+# Docker
+docker-compose.override.yml
+
+# SSL / Certbot
+infrastructure/certbot/conf/
+infrastructure/certbot/www/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -8,9 +8,9 @@ spring:
     name: calio-identity-service
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:calio_identity_db}
-    username: ${DB_USER:calio_user}
-    password: ${DB_PASSWORD:calio_pass}
+    url: jdbc:postgresql://${CALIO_IDENTITY_DB_HOST:calio-postgres}:${CALIO_IDENTITY_DB_PORT:5432}/${CALIO_IDENTITY_DB_NAME:calio_identity_db}
+    username: ${CALIO_IDENTITY_DB_USER:postgres}
+    password: ${CALIO_IDENTITY_DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -24,6 +24,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   sql:
     init:
@@ -31,17 +32,17 @@ spring:
       schema-locations: classpath:db/schema.sql
 
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:calio}
-    password: ${RABBITMQ_PASSWORD:calio123}
+    host: ${CALIO_RABBITMQ_HOST:calio-rabbitmq}
+    port: ${CALIO_RABBITMQ_PORT:5672}
+    username: ${CALIO_RABBITMQ_USER:calio_admin}
+    password: ${CALIO_RABBITMQ_PASSWORD:calio_admin}
     virtual-host: /
 
 calio:
   jwt:
-    secret: ${JWT_SECRET:cali0-super-secret-key-for-jwt-signing-256bits!!}
-    expiration-ms: 86400000
-    refresh-expiration-ms: 604800000
+    secret: ${CALIO_JWT_SECRET:calio-secret-key-2026-prod-very-secure-minimum-256-bits-long}
+    expiration-ms: ${CALIO_JWT_EXPIRATION:86400000}
+    refresh-expiration-ms: ${CALIO_REFRESH_EXPIRATION:604800000}
 
   rabbitmq:
     exchange: calio.events
@@ -64,5 +65,5 @@ management:
 
 logging:
   level:
-    com.calio: DEBUG
-    org.springframework.security: INFO
+    com.calio: INFO
+    org.springframework.security: WARN

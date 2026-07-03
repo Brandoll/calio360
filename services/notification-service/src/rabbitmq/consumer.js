@@ -2,10 +2,10 @@ import amqp from 'amqplib';
 import { NotificationLog } from '../models/NotificationLog.js';
 
 export async function startRabbitMQConsumer() {
-  const host = process.env.RABBITMQ_HOST || 'localhost';
-  const port = process.env.RABBITMQ_PORT || 5672;
-  const user = process.env.RABBITMQ_USER || 'guest';
-  const password = process.env.RABBITMQ_PASSWORD || 'guest';
+  const host = process.env.CALIO_RABBITMQ_HOST || 'calio-rabbitmq';
+  const port = process.env.CALIO_RABBITMQ_PORT || 5672;
+  const user = process.env.CALIO_RABBITMQ_USER || 'calio_admin';
+  const password = process.env.CALIO_RABBITMQ_PASSWORD || 'calio_admin';
   
   const rabbitUrl = `amqp://${user}:${password}@${host}:${port}`;
 
@@ -16,30 +16,42 @@ export async function startRabbitMQConsumer() {
     const exchange = 'calio.events';
     await channel.assertExchange(exchange, 'topic', { durable: true });
     
-    const q = await channel.assertQueue('', { exclusive: true });
-    
+    // Colas persistentes (durable) — no exclusive
+    await channel.assertQueue('calio.notifications.water', { durable: true });
+    await channel.assertQueue('calio.notifications.exercise', { durable: true });
+    await channel.assertQueue('calio.notifications.goal', { durable: true });
+    await channel.assertQueue('calio.notifications.send', { durable: true });
+
     // Bindings según la arquitectura
-    channel.bindQueue(q.queue, exchange, 'agua.actualizada');
-    channel.bindQueue(q.queue, exchange, 'rutina.completada');
+    channel.bindQueue('calio.notifications.water', exchange, 'meal.updated');
+    channel.bindQueue('calio.notifications.exercise', exchange, 'activity.updated');
+    channel.bindQueue('calio.notifications.goal', exchange, 'goal.completed');
+    channel.bindQueue('calio.notifications.send', exchange, 'notification.send');
 
-    console.log(' [*] Notification Service esperando eventos en RabbitMQ...');
+    console.log('[calio-notification-service] Esperando eventos en RabbitMQ...');
 
-    channel.consume(q.queue, async (msg) => {
+    const handleMessage = async (msg) => {
       if (msg !== null) {
         const routingKey = msg.fields.routingKey;
         const content = JSON.parse(msg.content.toString());
         
-        console.log(` [Notification] Recibido evento: ${routingKey}`);
+        console.log(`[Notification] Recibido evento: ${routingKey}`);
 
         let mensajePush = '';
         let tipo = 'motivacional';
 
-        if (routingKey === 'agua.actualizada') {
+        if (routingKey === 'meal.updated') {
           tipo = 'recordatorio';
-          mensajePush = `¡Excelente! Llevas ${content.vasosAgua} vasos de agua hoy. ¡Mantente hidratado!`;
-        } else if (routingKey === 'rutina.completada') {
+          mensajePush = `¡Excelente! Has registrado tu comida. ¡Mantente en el camino!`;
+        } else if (routingKey === 'activity.updated') {
           tipo = 'motivacional';
-          mensajePush = `¡Gran trabajo en tu entrenamiento, quemaste ${content.caloriasQuemadas} calorías! Sigue así.`;
+          mensajePush = `¡Gran trabajo en tu entrenamiento, quemaste ${content.caloriasQuemadas || 0} calorías! Sigue así.`;
+        } else if (routingKey === 'goal.completed') {
+          tipo = 'motivacional';
+          mensajePush = `¡Felicidades! Has completado tu meta: ${content.meta || 'Meta personalizada'}`;
+        } else if (routingKey === 'notification.send') {
+          tipo = content.tipo || 'alerta';
+          mensajePush = content.mensaje || 'Tienes una nueva notificación.';
         }
 
         if (mensajePush) {
@@ -59,9 +71,16 @@ export async function startRabbitMQConsumer() {
 
         channel.ack(msg);
       }
-    });
+    };
+
+    channel.consume('calio.notifications.water', handleMessage);
+    channel.consume('calio.notifications.exercise', handleMessage);
+    channel.consume('calio.notifications.goal', handleMessage);
+    channel.consume('calio.notifications.send', handleMessage);
 
   } catch (error) {
-    console.error('No se pudo conectar a RabbitMQ:', error);
+    console.error('[calio-notification-service] No se pudo conectar a RabbitMQ:', error);
+    // Retry after 10 seconds
+    setTimeout(startRabbitMQConsumer, 10000);
   }
 }

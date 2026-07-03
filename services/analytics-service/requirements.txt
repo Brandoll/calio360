@@ -1,5 +1,6 @@
-flask
-python-dotenv
-pymongo
-pika
-reportlab
+flask==3.0.2
+python-dotenv==1.0.1
+pymongo==4.7.1
+pika==1.3.2
+reportlab==4.2.0
+gunicorn==22.0.0

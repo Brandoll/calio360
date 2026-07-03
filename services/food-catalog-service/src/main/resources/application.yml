@@ -3,15 +3,16 @@ server:
 
 spring:
   application:
-    name: calio-food-catalog-service
+    name: calio-food-service
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:calio}
-    username: ${DB_USER:calio_user}
-    password: ${DB_PASSWORD:calio_pass}
+    url: jdbc:postgresql://${CALIO_FOOD_DB_HOST:calio-postgres}:${CALIO_FOOD_DB_PORT:5432}/${CALIO_FOOD_DB_NAME:calio_food_db}
+    username: ${CALIO_FOOD_DB_USER:postgres}
+    password: ${CALIO_FOOD_DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
+      minimum-idle: 2
 
   jpa:
     hibernate:
@@ -28,14 +29,14 @@ spring:
       data-locations: classpath:db/seed_alimentos.sql
 
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    host: ${CALIO_RABBITMQ_HOST:calio-rabbitmq}
+    port: ${CALIO_RABBITMQ_PORT:5672}
+    username: ${CALIO_RABBITMQ_USER:calio_admin}
+    password: ${CALIO_RABBITMQ_PASSWORD:calio_admin}
 
 calio:
   jwt:
-    secret: ${JWT_SECRET:-cali0-super-secret-key-for-jwt-signing-256bits!!}
+    secret: ${CALIO_JWT_SECRET:calio-secret-key-2026-prod-very-secure-minimum-256-bits-long}
 
 management:
   endpoints:
@@ -45,4 +46,4 @@ management:
 
 logging:
   level:
-    com.calio: DEBUG
+    com.calio: INFO

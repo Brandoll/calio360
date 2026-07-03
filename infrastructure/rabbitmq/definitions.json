@@ -4,24 +4,87 @@
     { "name": "/" }
   ],
   "users": [
-    { "name": "guest", "password_hash": "guest", "hashing_algorithm": "rabbit_password_hashing_sha256", "tags": "administrator" }
+    {
+      "name": "calio_admin",
+      "password_hash": "CALIO_RABBITMQ_PASSWORD_PLACEHOLDER",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    }
   ],
   "permissions": [
-    { "user": "guest", "vhost": "/", "configure": ".*", "write": ".*", "read": ".*" }
+    {
+      "user": "calio_admin",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
   ],
   "exchanges": [
-    { "name": "calio.events", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false }
+    {
+      "name": "calio.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false
+    }
   ],
   "queues": [
-    { "name": "analytics.comida", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
-    { "name": "analytics.rutina", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
-    { "name": "notifications.agua", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
-    { "name": "notifications.rutina", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} }
+    { "name": "calio.analytics.food", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    { "name": "calio.analytics.exercise", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    { "name": "calio.notifications.water", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    { "name": "calio.notifications.exercise", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    { "name": "calio.notifications.goal", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    { "name": "calio.notifications.send", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} }
   ],
   "bindings": [
-    { "source": "calio.events", "vhost": "/", "destination": "analytics.comida", "destination_type": "queue", "routing_key": "comida.registrada", "arguments": {} },
-    { "source": "calio.events", "vhost": "/", "destination": "analytics.rutina", "destination_type": "queue", "routing_key": "rutina.completada", "arguments": {} },
-    { "source": "calio.events", "vhost": "/", "destination": "notifications.agua", "destination_type": "queue", "routing_key": "agua.actualizada", "arguments": {} },
-    { "source": "calio.events", "vhost": "/", "destination": "notifications.rutina", "destination_type": "queue", "routing_key": "rutina.completada", "arguments": {} }
+    {
+      "source": "calio.events",
+      "vhost": "/",
+      "destination": "calio.analytics.food",
+      "destination_type": "queue",
+      "routing_key": "food.registered",
+      "arguments": {}
+    },
+    {
+      "source": "calio.events",
+      "vhost": "/",
+      "destination": "calio.analytics.exercise",
+      "destination_type": "queue",
+      "routing_key": "activity.updated",
+      "arguments": {}
+    },
+    {
+      "source": "calio.events",
+      "vhost": "/",
+      "destination": "calio.notifications.water",
+      "destination_type": "queue",
+      "routing_key": "meal.updated",
+      "arguments": {}
+    },
+    {
+      "source": "calio.events",
+      "vhost": "/",
+      "destination": "calio.notifications.exercise",
+      "destination_type": "queue",
+      "routing_key": "activity.updated",
+      "arguments": {}
+    },
+    {
+      "source": "calio.events",
+      "vhost": "/",
+      "destination": "calio.notifications.goal",
+      "destination_type": "queue",
+      "routing_key": "goal.completed",
+      "arguments": {}
+    },
+    {
+      "source": "calio.events",
+      "vhost": "/",
+      "destination": "calio.notifications.send",
+      "destination_type": "queue",
+      "routing_key": "notification.send",
+      "arguments": {}
+    }
   ]
 }

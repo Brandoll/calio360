@@ -12,8 +12,11 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Tu API Key que empieza con AQ.
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# ==========================================
+# CONFIGURACIÓN (Variables CALIO_*)
+# ==========================================
+GEMINI_API_KEY = os.getenv("CALIO_GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("CALIO_GEMINI_MODEL", "gemini-2.5-flash")
 
 # Iniciar cliente oficial de google con la clave de forma nativa
 cliente_gemini = genai.Client(api_key=GEMINI_API_KEY)
@@ -38,7 +41,16 @@ SYSTEM_INSTRUCTION = (
     "Si encuentras platos tradicionales, desglosa los macronutrientes basándote en recetas estándar latinoamericanas."
 )
 
+# ==========================================
+# HEALTH CHECK
+# ==========================================
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok", "service": "calio-ai-service"}), 200
+
+# ==========================================
 # PROCESAMIENTO DE IMAGEN
+# ==========================================
 @app.route('/analyze', methods=['POST'])
 def analizar_imagen():
     if 'imagen' not in request.files:
@@ -53,7 +65,7 @@ def analizar_imagen():
         imagen_cargada = Image.open(io.BytesIO(bytes_imagen))
 
         respuesta = cliente_gemini.models.generate_content(
-            model='gemini-2.5-flash',
+            model=GEMINI_MODEL,
             contents=[imagen_cargada, "Por favor, analiza esta comida."],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -67,10 +79,12 @@ def analizar_imagen():
         return respuesta.text, 200, {'Content-Type': 'application/json'}
 
     except Exception as e:
-        return jsonify({"error": f"Error interno en S-02 con SDK (Imagen): {str(e)}"}), 500
+        return jsonify({"error": f"Error interno en calio-ai-service (Imagen): {str(e)}"}), 500
 
 
+# ==========================================
 # PROCESAMIENTO DE TEXTO
+# ==========================================
 @app.route('/analyze-text', methods=['POST'])
 def analizar_texto():
     data = request.get_json()
@@ -82,7 +96,7 @@ def analizar_texto():
 
     try:
         respuesta = cliente_gemini.models.generate_content(
-            model='gemini-2.5-flash',
+            model=GEMINI_MODEL,
             contents=[f"Analiza la siguiente comida: '{texto_usuario}'"],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -95,8 +109,11 @@ def analizar_texto():
         return respuesta.text, 200, {'Content-Type': 'application/json'}
 
     except Exception as e:
-        return jsonify({"error": f"Error interno en S-02 con SDK (Texto): {str(e)}"}), 500
+        return jsonify({"error": f"Error interno en calio-ai-service (Texto): {str(e)}"}), 500
 
 
+# ==========================================
+# ENTRYPOINT (solo para desarrollo local)
+# ==========================================
 if __name__ == '__main__':
-    app.run(port=8082, debug=True)
+    app.run(host='0.0.0.0', port=8082, debug=False)

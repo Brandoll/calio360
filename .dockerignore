@@ -1,0 +1,12 @@
+# ==========================================
+# CALIO360 — .dockerignore (Raíz)
+# ==========================================
+.git
+.gitignore
+*.md
+docs/
+frontend/
+infrastructure/
+docker-compose*.yml
+.env*
+LICENSE
