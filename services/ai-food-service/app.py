@@ -38,7 +38,21 @@ SYSTEM_INSTRUCTION = (
     "Eres un experto nutricionista especializado en gastronomía de Latinoamérica. "
     "Tu tarea es analizar alimentos e identificar ingredientes nativos de la región (ej. quinua, arepa, ceviche, lulo). "
     "Debes calcular con precisión las porciones, calorías, proteínas, grasas y carbohidratos. "
-    "Si encuentras platos tradicionales, desglosa los macronutrientes basándote en recetas estándar latinoamericanas."
+    "Si encuentras platos tradicionales, desglosa los macronutrientes basándote en recetas estándar latinoamericanas.\n\n"
+    "MUY IMPORTANTE: Debes responder ÚNICA y EXCLUSIVAMENTE con un objeto JSON válido que siga exactamente esta estructura:\n"
+    "{\n"
+    '  "items": [\n'
+    '    {\n'
+    '      "nombre": "Nombre del plato o ingrediente",\n'
+    '      "calorias": 100,\n'
+    '      "proteinas": 10,\n'
+    '      "grasas": 5,\n'
+    '      "carbohidratos": 20\n'
+    '    }\n'
+    '  ],\n'
+    '  "confianza": 0.95\n'
+    "}\n"
+    "No incluyas markdown, ni bloques ```json, ni texto adicional. Solo el JSON puro."
 )
 
 # ==========================================
@@ -69,14 +83,20 @@ def analizar_imagen():
             contents=[imagen_cargada, "Por favor, analiza esta comida."],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=AnalysisResult,
                 system_instruction=SYSTEM_INSTRUCTION,
                 temperature=0.2 # Baja temperatura para que sea más preciso y analítico
             )
         )
 
-        # La respuesta ya es un string JSON válido gracias al response_schema
-        return respuesta.text, 200, {'Content-Type': 'application/json'}
+        # La respuesta ya es un string JSON válido gracias a la instrucción
+        # Limpiamos posibles bloques markdown de JSON que a veces incluye la IA
+        texto = respuesta.text.strip()
+        if texto.startswith("```json"):
+            texto = texto[7:]
+        if texto.endswith("```"):
+            texto = texto[:-3]
+            
+        return texto.strip(), 200, {'Content-Type': 'application/json'}
 
     except Exception as e:
         return jsonify({"error": f"Error interno en calio-ai-service (Imagen): {str(e)}"}), 500
@@ -100,13 +120,18 @@ def analizar_texto():
             contents=[f"Analiza la siguiente comida: '{texto_usuario}'"],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=AnalysisResult,
                 system_instruction=SYSTEM_INSTRUCTION,
                 temperature=0.2
             )
         )
 
-        return respuesta.text, 200, {'Content-Type': 'application/json'}
+        texto = respuesta.text.strip()
+        if texto.startswith("```json"):
+            texto = texto[7:]
+        if texto.endswith("```"):
+            texto = texto[:-3]
+
+        return texto.strip(), 200, {'Content-Type': 'application/json'}
 
     except Exception as e:
         return jsonify({"error": f"Error interno en calio-ai-service (Texto): {str(e)}"}), 500
