@@ -3,14 +3,6 @@
   "vhosts": [
     { "name": "/" }
   ],
-  "users": [
-    {
-      "name": "calio_admin",
-      "password_hash": "CALIO_RABBITMQ_PASSWORD_PLACEHOLDER",
-      "hashing_algorithm": "rabbit_password_hashing_sha256",
-      "tags": "administrator"
-    }
-  ],
   "permissions": [
     {
       "user": "calio_admin",
