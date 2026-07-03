@@ -1,32 +1,24 @@
-package com.calio.tracking.dto.request;
+package com.calio.tracking.dto.response;
 
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-public class MealRequest {
-    @NotNull
+@NoArgsConstructor
+@AllArgsConstructor
+public class MealRecordDto {
+    private Long id;
     private Long userId;
-    @NotNull
     private Long alimentoId;
-    
     private String nombre;
-
-    @NotNull
     private Integer porcionGramos;
-    @NotNull
     private String momento;
-    @NotNull
     private LocalDate fecha;
-    @NotNull
     private Integer calorias;
-    @NotNull
     private BigDecimal proteinas;
-    @NotNull
     private BigDecimal grasas;
-    @NotNull
     private BigDecimal carbohidratos;
 }

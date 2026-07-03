@@ -24,6 +24,9 @@ public class ComidaRegistrada {
     @Column(name = "alimento_id", nullable = false)
     private Long alimentoId;
 
+    @Column(name = "nombre")
+    private String nombre;
+
     @Column(name = "porcion_gramos", nullable = false)
     private Integer porcionGramos;
 

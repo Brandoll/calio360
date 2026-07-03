@@ -3,6 +3,7 @@ package com.calio.tracking.service;
 import com.calio.tracking.dto.request.MealRequest;
 import com.calio.tracking.dto.request.WaterRequest;
 import com.calio.tracking.dto.response.DailySummaryResponse;
+import com.calio.tracking.dto.response.MealRecordDto;
 import com.calio.tracking.messaging.TrackingEventPublisher;
 import com.calio.tracking.model.AguaDiaria;
 import com.calio.tracking.model.ComidaRegistrada;
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class TrackingService {
         ComidaRegistrada comida = new ComidaRegistrada();
         comida.setUserId(request.getUserId());
         comida.setAlimentoId(request.getAlimentoId());
+        comida.setNombre(request.getNombre());
         comida.setPorcionGramos(request.getPorcionGramos());
         comida.setMomento(request.getMomento());
         comida.setFecha(request.getFecha());
@@ -66,7 +69,21 @@ public class TrackingService {
 
         int vasos = aguaRepository.findByUserIdAndFecha(userId, fecha).map(AguaDiaria::getVasos).orElse(0);
 
-        return new DailySummaryResponse(totalCal, totalProt, totalGrasas, totalCarbs, vasos);
+        List<MealRecordDto> comidasDto = comidas.stream().map(c -> new MealRecordDto(
+                c.getId(),
+                c.getUserId(),
+                c.getAlimentoId(),
+                c.getNombre(),
+                c.getPorcionGramos(),
+                c.getMomento(),
+                c.getFecha(),
+                c.getCalorias(),
+                c.getProteinas(),
+                c.getGrasas(),
+                c.getCarbohidratos()
+        )).collect(Collectors.toList());
+
+        return new DailySummaryResponse(totalCal, totalProt, totalGrasas, totalCarbs, vasos, comidasDto);
     }
 
     private int calcularCaloriasDia(Long userId, LocalDate fecha) {
