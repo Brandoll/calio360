@@ -325,6 +325,8 @@ services:
     build: ./services/gateway-service
     container_name: calio-gateway
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080" # Expuesto solo localmente para el Nginx nativo del VPS
     environment:
       CALIO_JWT_SECRET: ${CALIO_JWT_SECRET}
       CALIO_IDENTITY_SERVICE_URL: http://calio-identity-service:8081
@@ -350,43 +352,6 @@ services:
       resources:
         limits:
           memory: 512M
-    networks:
-      - calio-network
-
-  # ==========================================
-  # NGINX REVERSE PROXY (Único punto expuesto)
-  # ==========================================
-  nginx:
-    image: nginx:alpine
-    container_name: calio-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./infrastructure/nginx/proxy_params:/etc/nginx/proxy_params:ro
-      - ./infrastructure/certbot/conf:/etc/letsencrypt:ro
-      - ./infrastructure/certbot/www:/var/www/certbot:ro
-    depends_on:
-      - calio-gateway
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    networks:
-      - calio-network
-
-  # ==========================================
-  # CERTBOT (SSL Certificate Management)
-  # ==========================================
-  certbot:
-    image: certbot/certbot
-    container_name: calio-certbot
-    volumes:
-      - ./infrastructure/certbot/conf:/etc/letsencrypt
-      - ./infrastructure/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     networks:
       - calio-network
 
