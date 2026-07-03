@@ -27,7 +27,7 @@ USER calio
 EXPOSE 8081
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8081/api/v1/actuator/health || exit 1
+    CMD curl -f http://localhost:8081/actuator/health || exit 1
 
 ENTRYPOINT ["java", \
     "-XX:+UseContainerSupport", \
