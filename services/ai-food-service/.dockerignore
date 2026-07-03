@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,10 @@
+# Node
+node_modules/
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+logs/

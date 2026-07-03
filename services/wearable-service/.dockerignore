@@ -1,0 +1,20 @@
+# Java build artifacts
+target/
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Git
+.git
+.gitignore
+
+# Maven wrapper
+.mvn/
+
+# Logs
+*.log
+logs/
