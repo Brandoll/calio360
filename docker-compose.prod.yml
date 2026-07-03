@@ -63,7 +63,6 @@ services:
       RABBITMQ_DEFAULT_PASS: ${CALIO_RABBITMQ_PASSWORD}
     volumes:
       - calio_rabbitmq_data:/var/lib/rabbitmq
-      - ./infrastructure/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
       - ./infrastructure/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     healthcheck:
       test: rabbitmq-diagnostics -q ping
