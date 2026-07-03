@@ -85,8 +85,7 @@ spring:
         cors-configurations:
           '[/**]':
             allowedOrigins:
-              - "https://calio360.app"
-              - "https://api.calio360.app"
+              - "*"
             allowedMethods:
               - GET
               - POST
