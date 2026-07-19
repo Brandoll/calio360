@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-DEPLOY_DIR="/opt/calio360"
+DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$DEPLOY_DIR/docker-compose.prod.yml"
 DOMAIN="api.calio360.app"
 EMAIL="admin@calio360.app"
@@ -231,8 +231,10 @@ first_run() {
     mkdir -p "$DEPLOY_DIR/infrastructure/certbot/www"
 
     # Copy project files
-    log_info "Copying project files to $DEPLOY_DIR..."
-    rsync -av --exclude='.git' --exclude='node_modules' --exclude='target' . "$DEPLOY_DIR/"
+    if [ "$(pwd)" != "$DEPLOY_DIR" ]; then
+        log_info "Copying project files to $DEPLOY_DIR..."
+        rsync -av --exclude='.git' --exclude='node_modules' --exclude='target' . "$DEPLOY_DIR/"
+    fi
 
     # Setup the env file with the detected IP
     setup_env_file "$ip"
