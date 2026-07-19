@@ -166,9 +166,9 @@ setup_env_file() {
         
         # Call generate-secrets.sh to generate random secure credentials and set detected IP
         if [ -f "./generate-secrets.sh" ]; then
-            ./generate-secrets.sh "$ip" > "$env_file"
+            bash ./generate-secrets.sh "$ip" > "$env_file"
         elif [ -f "$DEPLOY_DIR/generate-secrets.sh" ]; then
-            "$DEPLOY_DIR/generate-secrets.sh" "$ip" > "$env_file"
+            bash "$DEPLOY_DIR/generate-secrets.sh" "$ip" > "$env_file"
         else
             log_warn "generate-secrets.sh not found. Copying .env.example..."
             cp .env.example "$env_file"
