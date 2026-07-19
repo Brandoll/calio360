@@ -156,8 +156,9 @@ setup_env_file() {
     local ip="$1"
     local env_file="$DEPLOY_DIR/.env"
 
-    if [ ! -f "$env_file" ]; then
-        log_info "No .env file found at $DEPLOY_DIR."
+    # Use -s to check if file exists AND is not empty
+    if [ ! -s "$env_file" ]; then
+        log_info "No .env file found or it is empty at $DEPLOY_DIR."
         log_info "Generating a secure, customized .env file with detected IP $ip..."
         
         # Ensure target deployment folder exists
@@ -189,15 +190,24 @@ setup_env_file() {
         fi
     else
         log_info "Existing .env file detected."
-        # Verify and update CALIO_SERVER_IP if needed
-        local current_env_ip
-        current_env_ip=$(grep -E "^CALIO_SERVER_IP=" "$env_file" | cut -d'=' -f2 || echo "")
-        if [ "$current_env_ip" != "$ip" ]; then
-            log_warn "Your .env file has CALIO_SERVER_IP=$current_env_ip but the VPS current public IP is $ip."
-            read -p "Would you like to update CALIO_SERVER_IP to $ip in your .env? (Y/n): " -r response
-            if [[ ! "$response" =~ ^[nN]$ ]]; then
-                sed -i "s/CALIO_SERVER_IP=.*/CALIO_SERVER_IP=$ip/" "$env_file"
-                log_success "Updated CALIO_SERVER_IP to $ip in $env_file"
+        
+        # Check if CALIO_SERVER_IP exists in the file at all
+        if ! grep -q "^CALIO_SERVER_IP=" "$env_file"; then
+            log_info "Adding CALIO_SERVER_IP=$ip to your .env..."
+            echo "" >> "$env_file"
+            echo "CALIO_SERVER_IP=$ip" >> "$env_file"
+            log_success "Added CALIO_SERVER_IP to $env_file"
+        else
+            # Verify and update CALIO_SERVER_IP if needed
+            local current_env_ip
+            current_env_ip=$(grep -E "^CALIO_SERVER_IP=" "$env_file" | cut -d'=' -f2 | tr -d '\r' || echo "")
+            if [ "$current_env_ip" != "$ip" ]; then
+                log_warn "Your .env file has CALIO_SERVER_IP=$current_env_ip but the VPS current public IP is $ip."
+                read -p "Would you like to update CALIO_SERVER_IP to $ip in your .env? (Y/n): " -r response
+                if [[ ! "$response" =~ ^[nN]$ ]]; then
+                    sed -i "s/CALIO_SERVER_IP=.*/CALIO_SERVER_IP=$ip/" "$env_file"
+                    log_success "Updated CALIO_SERVER_IP to $ip in $env_file"
+                fi
             fi
         fi
     fi
