@@ -325,7 +325,7 @@ services:
     container_name: calio-gateway
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:8080" # Expuesto solo localmente para el Nginx nativo del VPS
+      - "172.17.0.1:8080:8080" # Expuesto a la interfaz de Docker para NPM
     environment:
       CALIO_JWT_SECRET: ${CALIO_JWT_SECRET}
       CALIO_IDENTITY_SERVICE_URL: http://calio-identity-service:8081
