@@ -24,7 +24,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     // Rutas públicas que NO requieren JWT
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/auth/login",
-            "/api/auth/register"
+            "/api/auth/register",
+            "/api/exercises/gifs/"
     );
 
     @Override
