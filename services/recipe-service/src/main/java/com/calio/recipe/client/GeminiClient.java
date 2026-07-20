@@ -62,4 +62,38 @@ public class GeminiClient {
             throw new RuntimeException("No se pudo generar el plan con la IA.");
         }
     }
+
+    public String generateSingleRecipe(List<String> ingredients) {
+        String url = geminiApiUrl + "?key=" + geminiApiKey;
+
+        String systemInstruction = "Eres un chef experto en comida saludable latinoamericana. Crea una única receta deliciosa usando exclusivamente los ingredientes proporcionados (puedes agregar condimentos básicos). Devuelve un JSON con formato: {\"titulo\": \"...\", \"descripcion\": \"...\", \"ingredientes\": [\"...\"], \"pasos\": [\"...\"], \"macros\": {\"calorias\": 0, \"proteinas\": 0, \"carbohidratos\": 0, \"grasas\": 0}}";
+        String prompt = "Genera una receta usando estos ingredientes: " + String.join(", ", ingredients);
+
+        Map<String, Object> requestBody = Map.of(
+            "system_instruction", Map.of("parts", List.of(Map.of("text", systemInstruction))),
+            "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
+            "generationConfig", Map.of(
+                "response_mime_type", "application/json",
+                "temperature", 0.7
+            )
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+
+        try {
+            Map<String, Object> response = restTemplate.postForObject(url, request, Map.class);
+            
+            List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
+            Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+            List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
+            
+            return (String) parts.get(0).get("text");
+
+        } catch (Exception e) {
+            log.error("Error comunicándose con Gemini API", e);
+            throw new RuntimeException("No se pudo generar la receta con la IA.");
+        }
+    }
 }

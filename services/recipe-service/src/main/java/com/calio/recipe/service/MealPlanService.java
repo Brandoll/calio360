@@ -46,4 +46,20 @@ public class MealPlanService {
         log.info("Plan generado y guardado exitosamente.");
         return mealPlanRepository.save(mealPlan);
     }
+
+    @Transactional
+    public MealPlan generateSingleRecipe(com.calio.recipe.dto.request.GenerateRecipeRequest request) {
+        log.info("Iniciando generación de receta para usuario {} con {} ingredientes", request.getUserId(), request.getIngredientes().size());
+
+        log.info("Llamando a Gemini API para receta única...");
+        String generatedJson = geminiClient.generateSingleRecipe(request.getIngredientes());
+
+        MealPlan mealPlan = new MealPlan();
+        mealPlan.setUserId(request.getUserId());
+        mealPlan.setSemana(LocalDate.now()); // Usamos el día actual
+        mealPlan.setPlanJson(generatedJson); // Guardamos la receta aquí
+
+        log.info("Receta generada y guardada exitosamente.");
+        return mealPlanRepository.save(mealPlan);
+    }
 }

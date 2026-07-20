@@ -24,6 +24,11 @@ public class MealPlanController {
         return ResponseEntity.ok(mealPlanService.generateWeeklyPlan(request));
     }
 
+    @PostMapping("/recipe/generate")
+    public ResponseEntity<MealPlan> generateSingleRecipe(@Valid @RequestBody com.calio.recipe.dto.request.GenerateRecipeRequest request) {
+        return ResponseEntity.ok(mealPlanService.generateSingleRecipe(request));
+    }
+
     @GetMapping("/history/{userId}")
     public ResponseEntity<List<MealPlan>> getPlanHistory(@PathVariable Long userId) {
         return ResponseEntity.ok(repository.findByUserIdOrderBySemanaDesc(userId));
