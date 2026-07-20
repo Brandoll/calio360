@@ -179,6 +179,7 @@ services:
       CALIO_RABBITMQ_PASSWORD: ${CALIO_RABBITMQ_PASSWORD}
     volumes:
       - calio_tracking_logs:/app/logs
+      - calio_tracking_images:/app/images
     depends_on:
       calio-postgres:
         condition: service_healthy
@@ -362,6 +363,7 @@ volumes:
   calio_identity_logs:
   calio_food_logs:
   calio_tracking_logs:
+  calio_tracking_images:
   calio_recipe_logs:
   calio_ai_logs:
   calio_analytics_logs:

@@ -36,4 +36,10 @@ public class TrackingController {
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(trackingService.getResumenDiario(userId, date));
     }
+
+    @DeleteMapping("/meals/{id}")
+    public ResponseEntity<Void> deleteMeal(@PathVariable Long id) {
+        trackingService.deleteMeal(id);
+        return ResponseEntity.ok().build();
+    }
 }

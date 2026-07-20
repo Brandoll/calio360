@@ -16,6 +16,7 @@ public class MealRecordDto {
     private String nombre;
     private Integer porcionGramos;
     private String momento;
+    private String imageUrl;
     private LocalDate fecha;
     private Integer calorias;
     private BigDecimal proteinas;

@@ -19,6 +19,8 @@ public class MealRequest {
     private Integer porcionGramos;
     @NotNull
     private String momento;
+    
+    private String imageUrl;
     @NotNull
     private LocalDate fecha;
     @NotNull

@@ -40,6 +40,7 @@ public class TrackingService {
         comida.setProteinas(request.getProteinas());
         comida.setGrasas(request.getGrasas());
         comida.setCarbohidratos(request.getCarbohidratos());
+        comida.setImageUrl(request.getImageUrl());
 
         comidaRepository.save(comida);
         eventPublisher.publishComidaRegistrada(comida.getUserId(), comida.getFecha().toString(), comida.getCalorias());
@@ -76,6 +77,7 @@ public class TrackingService {
                 c.getNombre(),
                 c.getPorcionGramos(),
                 c.getMomento(),
+                c.getImageUrl(),
                 c.getFecha(),
                 c.getCalorias(),
                 c.getProteinas(),
@@ -88,5 +90,13 @@ public class TrackingService {
 
     private int calcularCaloriasDia(Long userId, LocalDate fecha) {
         return comidaRepository.findByUserIdAndFecha(userId, fecha).stream().mapToInt(ComidaRegistrada::getCalorias).sum();
+    }
+
+    @Transactional
+    public void deleteMeal(Long mealId) {
+        comidaRepository.findById(mealId).ifPresent(comida -> {
+            comidaRepository.delete(comida);
+            eventPublisher.publishComidaRegistrada(comida.getUserId(), comida.getFecha().toString(), -comida.getCalorias());
+        });
     }
 }

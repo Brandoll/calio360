@@ -32,6 +32,9 @@ public class ComidaRegistrada {
 
     @Column(name = "momento", length = 20)
     private String momento; // desayuno, almuerzo, cena, snack
+    
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @Column(nullable = false)
     private LocalDate fecha;
