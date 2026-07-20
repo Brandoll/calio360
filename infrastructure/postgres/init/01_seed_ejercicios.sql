@@ -1,4 +1,6 @@
 -- Inicialización de la tabla de ejercicios con datos reales
+\c calio_exercise_db;
+
 CREATE TABLE IF NOT EXISTS ejercicios (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(150) NOT NULL,
