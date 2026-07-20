@@ -21,8 +21,7 @@ RUN addgroup -S calio && adduser -S calio -G calio
 RUN apk add --no-cache curl
 
 COPY --from=build /app/target/*.jar app.jar
-RUN chown -R calio:calio /app
-USER calio
+# Ejecutamos como root temporalmente para evitar problemas de permisos con el volumen de Docker en /app/images
 
 EXPOSE 8085
 
