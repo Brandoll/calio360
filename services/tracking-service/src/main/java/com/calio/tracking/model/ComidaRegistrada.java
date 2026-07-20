@@ -33,7 +33,7 @@ public class ComidaRegistrada {
     @Column(name = "momento", length = 20)
     private String momento; // desayuno, almuerzo, cena, snack
     
-    @Column(name = "image_url")
+    @Column(name = "image_url", length = 1000)
     private String imageUrl;
 
     @Column(nullable = false)
