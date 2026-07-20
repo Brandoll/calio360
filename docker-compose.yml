@@ -156,6 +156,8 @@ services:
         condition: service_healthy
       calio-rabbitmq:
         condition: service_healthy
+    volumes:
+      - calio_images_data:/app/images/
     networks:
       - calio-network
 
@@ -311,6 +313,7 @@ volumes:
   calio_postgres_data:
   calio_mongodb_data:
   calio_rabbitmq_data:
+  calio_images_data:
 
 # ==========================================
 # NETWORK
