@@ -22,6 +22,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
   rabbitmq:
     host: ${CALIO_RABBITMQ_HOST:calio-rabbitmq}
     port: ${CALIO_RABBITMQ_PORT:5672}
